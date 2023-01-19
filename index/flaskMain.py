@@ -50,9 +50,31 @@ def login():
         account = data["account"]
         password = data["password"]
         # print(account, password)
-        user = GudtUtil(acount=account, password=password)
-        ret = user.login()
+        # 这里会出现js 提醒，
+        re_try = 3
+        while re_try > 0:
+            try:
+                user = GudtUtil(account, password)
+                ret = user.login()
+                break
+            except Exception as e:
+                re_try -= 1
+                print("登录失败，重试中")
+                continue
+        if re_try == 0:
+            ret = {
+                "code": 4000,
+                # 为了兼容前端，本科显示的是校区，研究生就显示学院吧
+                "data": None,
+                "userInfo": None,
+                "cookies": None,
+                # 学期
+                "semester": None,
+                "msg": "登录失败,服务代理请求出现异常！",
+                "isLive": False
+            }
     except Exception as e:
+        print(e)
         pass
     end = time.time()
     print("耗时：" + str(end - t))
@@ -77,6 +99,7 @@ def get_user_info():
             "data": None,
             "msg": "请检查参数！"
         }
+        print(e)
     # 如果获取的是空，则重新登录返回
     return flask.jsonify(ret)
 
@@ -103,6 +126,7 @@ def check_need_captcha():
             "data": None,
             "msg": "请检查参数！"
         }
+        print(e)
     # 如果获取的是空，则重新登录返回
     return flask.jsonify(ret)
 
@@ -125,6 +149,7 @@ def get_ck():
             "isLive": False,
             "msg": "请检查参数！"
         }
+        print(e)
     # print("耗时：" + str(end - t))
     # 如果获取的是空，则重新登录返回
     return flask.jsonify(ret)

@@ -482,7 +482,7 @@ class GudtUtil(object):
         if not data:
             ret = {
                 "code": 4000,
-                "data": temp_map,
+                "data": None,
                 "msg": "true",
                 "isLive": False
             }
