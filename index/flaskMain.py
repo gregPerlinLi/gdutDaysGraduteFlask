@@ -17,27 +17,13 @@ app = flask.Flask(__name__)
 
 # 防止自动转unicode
 app.config['JSON_AS_ASCII'] = False
+
 # 注册CORS, "/*" 允许访问所有api
 CORS(app, resources=r'/*')
 
 
-def test_json():
-    json_path = "../test/test.json"
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f, strict=False)
-        return data
-
-
-# 本地测试
 @app.route('/api/test', methods=["POST", "GET"])
 def get_kc():
-    # 获取课程
-    # t = time.time()
-    # user = GudtUtil(acount="2112205176", password="Gdut21122")
-    # ret = user.get_ck()
-    #
-    # end = time.time()
-    # print("耗时：" + str(end - t))
     ret = {
         "code": 200,
         "Hi": "Ymri!"
@@ -73,16 +59,72 @@ def login():
     return flask.jsonify(ret)
 
 
-@app.route('/api/getCk', methods=["POST", "GET"])
-def get_ck():
+@app.route('/api/getUserInfo', methods=["POST", "GET"])
+def get_user_info():
     t = time.time()
     # 假定前端传入的是json类型
     data = request.get_json()
     # print(data)
-    cookies = data["cookies"]
-    wid = data["semester"]
-    ret = GudtUtil.get_ck_static(cookies=cookies, wid=wid)
-    end = time.time()
+    try:
+        cookies = data["cookies"]
+        # 获得个人信息
+        ret = GudtUtil.login_after_info(cookies=cookies)
+        end = time.time()
+        print("耗时：" + str(end - t))
+    except Exception as e:
+        ret = {
+            "code": 4000,
+            "data": None,
+            "msg": "请检查参数！"
+        }
+    # 如果获取的是空，则重新登录返回
+    return flask.jsonify(ret)
+
+
+@app.route('/api/checkCaptcha', methods=["POST", "GET"])
+def check_need_captcha():
+    """"
+    检查是否需要验证码
+    """
+    t = time.time()
+
+    # 假定前端传入的是json类型
+    try:
+        data = request.get_json()
+        # print(data)
+        username = data["stdId"]
+        # 获得个人信息
+        ret = GudtUtil.check_need_Captcha(username=username)
+        end = time.time()
+        print("耗时：" + str(end - t))
+    except Exception as e:
+        ret = {
+            "code": 4000,
+            "data": None,
+            "msg": "请检查参数！"
+        }
+    # 如果获取的是空，则重新登录返回
+    return flask.jsonify(ret)
+
+
+@app.route('/api/getCk', methods=["POST", "GET"])
+def get_ck():
+    t = time.time()
+    # 假定前端传入的是json类型
+    try:
+        data = request.get_json()
+        # print(data)
+        cookies = data["cookies"]
+        wid = data["semester"]
+        ret = GudtUtil.get_ck_static(cookies=cookies, wid=wid)
+        end = time.time()
+    except Exception as e:
+        ret = {
+            "code": 4000,
+            "data": None,
+            "isLive": False,
+            "msg": "请检查参数！"
+        }
     # print("耗时：" + str(end - t))
     # 如果获取的是空，则重新登录返回
     return flask.jsonify(ret)
@@ -96,13 +138,22 @@ def get_score():
     """
     t = time.time()
     # 假定前端传入的是json类型
-    data = request.get_json()
-    # print(data)
-    cookies = data["cookies"]
-    ret = GudtUtil.get_exam_data(cookies=cookies)
-    end = time.time()
+    try:
+        data = request.get_json()
+        # print(data)
+        cookies = data["cookies"]
+        ret = GudtUtil.get_exam_data(cookies=cookies)
+        end = time.time()
     # print("耗时：" + str(end - t))
     # 如果获取的是空，则重新登录返回
+    except Exception as e:
+        ret = {
+            "code": 4000,
+            "data": None,
+            "isLive": False,
+            "msg": "请检查参数！"
+        }
+        print(e)
     return flask.jsonify(ret)
 
 
@@ -112,19 +163,24 @@ def check_live():
     检查用户信息是否有效
     :return:
     """
-    t = time.time()
     # 假定前端传入的是json类型
-    data = request.get_json()
-    # print(data)
-    cookies = data["cookies"]
-    ret = GudtUtil.get_user_info_by_cookies(cookies=cookies)
-    end = time.time()
-    # print("耗时：" + str(end - t))
-    # 如果获取的是空，则重新登录返回
+    try:
+        data = request.get_json()
+        cookies = data["cookies"]
+        ret = GudtUtil.get_user_info_by_cookies(cookies=cookies)
+    except Exception as e:
+        ret = {
+            "code": 4000,
+            "data": None,
+            "isLive": False,
+            "msg": "请检查参数！"
+        }
     return flask.jsonify(ret)
 
 
-server = pywsgi.WSGIServer(('0.0.0.0', 8888), app)
+# app.debug = True
+
+server = pywsgi.WSGIServer(('0.0.0.0', 8888), app, )
 server.serve_forever()
 
 if __name__ == "__main__":

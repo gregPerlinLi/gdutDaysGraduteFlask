@@ -86,6 +86,29 @@ class GudtUtil(object):
                 pass
         return None
 
+    @staticmethod
+    def get_semester_message_by_cookies(cookies):
+        """
+        根据cookies 获取最新的学期信息
+        :param cookies:
+        :return:
+        """
+        url = "http://ehall.gdut.edu.cn/gsapp/sys/wdkbapp/modules/xskcb/kfdxnxqcx.do"
+        response = GudtUtil.requests_by_cookies(url, cookies=cookies)
+        if response:
+            data = response
+            try:
+                data = data["datas"]
+                data = data["kfdxnxqcx"]
+                data = data["rows"]
+                semester = data[0]
+                wid = semester["WID"]
+                wid = wid
+                return wid
+            except Exception as e:
+                print(e)
+                return None
+
     def get_kc_message(self, wid=None, try_again_times=3):
         """
         param try_again_times
@@ -146,23 +169,28 @@ class GudtUtil(object):
                 pass
 
     @staticmethod
-    def requests_by_cookies(url, cookies, try_again_times=3):
+    def requests_by_cookies(url, cookies, try_again_times=3, postData=None, is_urlform_urlencoded=False):
         """
         请求工具
         :param try_again_times:
         :param url:  地址
         :param cookies:  cookies
+        :param is_urlform_urlencoded: 是否是header是否使用urlendcoded
         :return:
         """
         while try_again_times > 0:
             try:
                 payload = {}
+                if postData:
+                    payload = postData
                 headers = {
                     'Cookie': cookies,
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                                   'Chrome/89.0.4389.114 Safari/537.36',
 
                 }
+                if is_urlform_urlencoded:
+                    headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 response = requests.request("POST", url, headers=headers, data=payload, timeout=5)
                 if response.status_code == 200:
                     return response.json()
@@ -287,7 +315,7 @@ class GudtUtil(object):
             "code": 4000,
             # 为了兼容前端，本科显示的是校区，研究生就显示学院吧
             # "data": user_info["YXDM_DISPLAY"],
-            "data": "研究生院",
+            "data": "研究生院",  # 后续获取校区信息
             "userInfo": None,
             "cookies": cookies,
             # 学期
@@ -478,11 +506,16 @@ class GudtUtil(object):
                 "cType": "",  # 默认给空就好
                 "cn": i["KCMC"],  # 名称
                 "credit": i["XF"],  # 学分
-                "gp": "未知",  # 无所谓gp
-                "result": i["DYBFZCJ"],
+                "gp": None,  # 无所谓gp
+                "result": i["DYBFZCJ"],  # 成绩
                 "term": i["XNXQDM"],  # 学期
                 "type": i["KCLBMC"]  # 类型
             }
+            if i["DYBFZCJ"] == "不及格" or float(i["DYBFZCJ"]) < 60:
+                temp_data["gp"] = 0
+            else:
+                # 绩点计算
+                temp_data["gp"] = (float(i["DYBFZCJ"]) - 50) / 10
             if temp_map.get(i["XNXQDM"]) is None:
                 temp_map[i["XNXQDM"]] = [temp_data]
             else:
@@ -496,6 +529,78 @@ class GudtUtil(object):
             "msg": "true",
             "isLive": True
         }
+        return ret
+
+    @staticmethod
+    def get_campus(cookies, term):
+        """
+        获取校区信息
+        :param cookies:
+        :param 学期 20222
+        :return:
+        """
+        url = "http://ehall.gdut.edu.cn/gsapp/sys/wdkbapp/modules/xskcb/xsskjccx.do"
+        if not cookies:
+            return None
+        term = {
+            "XNXQDM": term
+        }
+        data = GudtUtil.requests_by_cookies(url=url, postData=term, cookies=cookies, is_urlform_urlencoded=True)
+        if data:
+            try:
+                data = data["datas"]
+                data = data["xsskjccx"]
+                data = data["rows"]
+                campus = data[0]
+                campus = campus["JCFAMC"]
+                # 第一节课上课的校区
+                campus = str(campus).replace("节次方案", "")
+                return campus
+            except Exception as e:
+                print("校区获取异常：")
+                print(e)
+                return None
+        return None
+
+    @staticmethod
+    def login_after_info(cookies):
+        """
+        登录后需要获取的信息
+        :param cookies:
+        :return:
+        """
+        ret = GudtUtil.get_user_info_by_cookies(cookies)
+        if ret["isLive"]:
+            user_info = ret["data"]
+            # 获取学期信息
+            term_info = GudtUtil.get_semester_message_by_cookies(cookies)
+            # 获取校区
+            campus = GudtUtil.get_campus(cookies, term_info)
+            data = {
+                "userInfo": user_info,
+                "semester": term_info,
+                "campus": campus
+            }
+            ret["data"] = data
+            return ret
+        else:
+            return ret
+
+    @staticmethod
+    def check_need_Captcha(username):
+        """
+        检查是否需要验证码
+        :param username:
+        :return:
+        """
+        url = "https://authserver.gdut.edu.cn/authserver/checkNeedCaptcha.htl"
+        data = {
+            "username": username
+        }
+
+        # 通过用户名获取是否需要验证码
+        ret = GudtUtil.requests_by_cookies(cookies=None, url=url, postData=data)
+        ret["code"] = 4000
         return ret
 
 
