@@ -311,6 +311,7 @@ class GudtUtil(object):
         # 课程权限获取
         self.__login(url=self.ck_url)
         cookies = self.__cookies_2_list()
+
         ret = {
             "code": 4000,
             # 为了兼容前端，本科显示的是校区，研究生就显示学院吧
@@ -323,6 +324,10 @@ class GudtUtil(object):
             "msg": "登录成功",
             "isLive": True
         }
+        if not cookies:
+            ret["code"] = 4000
+            ret["msg"] = "登录失败"
+            ret["isLive"] = False
         return ret
 
     @staticmethod
