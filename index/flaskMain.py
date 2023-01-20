@@ -42,7 +42,7 @@ def login():
         "cookies": None,
         # 学期
         "semester": None,
-        "msg": "登录失败",
+        "msg": "密码错误！",
         "isLive": False
     }
     try:
@@ -64,17 +64,20 @@ def login():
         if re_try == 0:
             ret = {
                 "code": 4000,
-                # 为了兼容前端，本科显示的是校区，研究生就显示学院吧
                 "data": None,
                 "userInfo": None,
                 "cookies": None,
-                # 学期
                 "semester": None,
-                "msg": "登录失败,服务代理请求出现异常！",
-                "isLive": False
+                "msg": "登录失败,由于测试服务器原因，请等2min再登录！",
+                "isLive": False,
             }
     except Exception as e:
         print(e)
+        ret = {
+            "code": 4000,
+            "data": None,
+            "msg": "请检查参数！"
+        }
         pass
     end = time.time()
     print("耗时：" + str(end - t))
@@ -124,7 +127,8 @@ def check_need_captcha():
         ret = {
             "code": 4000,
             "data": None,
-            "msg": "请检查参数！"
+            "msg": "请检查参数！",
+            "isLive": False
         }
         print(e)
     # 如果获取的是空，则重新登录返回
@@ -202,8 +206,6 @@ def check_live():
         }
     return flask.jsonify(ret)
 
-
-# app.debug = True
 
 server = pywsgi.WSGIServer(('0.0.0.0', 8888), app, )
 server.serve_forever()
