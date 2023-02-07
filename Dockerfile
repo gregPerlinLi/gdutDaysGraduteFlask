@@ -7,13 +7,12 @@ COPY requirements.txt ./
 
 # 换源
 # 更新
-RUN pip config set global.index-url http://mirrors.aliyun.com/pypi/simple
-RUN pip config set install.trusted-host mirrors.aliyun.com
-RUN pip install -U pip
+RUN pip config set global.index-url http://mirrors.aliyun.com/pypi/simple \
+    && pip config set install.trusted-host mirrors.aliyun.com \
+    && pip install -U pip \
+    ## 下载依赖
+    && pip3 install -r requirements.txt
 # RUN /usr/local/bin/python -m pip install --upgrade pip
-# 下载依赖
-#
-RUN pip3 install -r requirements.txt
 
 COPY . .
 
