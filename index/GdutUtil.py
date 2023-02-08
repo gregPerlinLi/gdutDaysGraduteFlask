@@ -607,14 +607,3 @@ class GudtUtil(object):
         ret = GudtUtil.requests_by_cookies(cookies=None, url=url, postData=data)
         ret["code"] = 4000
         return ret
-
-
-if __name__ == "__main__":
-    # user = GudtUtil(acount="2112205176", password="Gdut21122")
-    # json = user.kc_data_clear()
-
-    cookies = "MOD_AUTH_CAS=MOD_AUTH_ST-829725-TlCdZo6DjYBZkdkFIakeskGXvjociap4;asessionid=463cc149-a252-4173-a8cd-93b9400225f3;route=fa747f0c13705789ad0cc67b58342982;wzws_sessionid=oGPFAEKCN2YzNTBlgTUxNDY5MIAyMjMuMTQ2LjEyMC4zOQ==;EMAP_LANG=zh;THEME=golden;_WEU=ElYDTE4XH4ssEx6CDnGTkQSmBGf_8qZkmGT_lI1z6PQwPdEVvu*EHmzQE5dcuxSEyMLnQO4OvWxxwfxXYA_DWrvVh8XI0D5F5gmBuir5xzgRKwxCItnLeo4qEM9*zAw1GIE0J4YNn18G122JQ11S48LhnjDiz0QbOOnthp12rQBIgsTuQm_Ee44hYtFoylRGjE3h5khJ5wc_alTdTQ6H_T1FldXMmkvb;route=062dee4b5d2ea02a2e4f85f6917817b6;route=062dee4b5d2ea02a2e4f85f6917817b6;route=062dee4b5d2ea02a2e4f85f6917817b6;"
-
-    user = GudtUtil.get_exam_data(cookies=cookies)
-
-    print(user)
