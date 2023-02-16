@@ -42,9 +42,10 @@ class GdutCrypto(object):
         decrypt_text = aes.decrypt(data)
         return str(decrypt_text[:-int(decrypt_text[-1])], encoding='utf-8')
 
+
 #
 if __name__ == '__main__':
     user = GdutCrypto('gdutgdutgdutgdut')
-    pwd = user.encrypt('911260362Wu'.encode('utf-8'))
+    pwd = user.encrypt('temssomosm'.encode('utf-8'))
     print(pwd)
     print(user.decrypt(pwd))
