@@ -10,6 +10,9 @@ import requests
 from libxduauth.utils.aes import GdutCrypto
 
 
+class UtilsException(Exception):
+    pass
+
 # 获得课表
 class GudtUtil(object):
     """
@@ -51,7 +54,7 @@ class GudtUtil(object):
             if try_again_times > 0:
                 self.__login(try_again_times)
             else:
-                raise Exception("接口授权失败")
+                raise UtilsException("接口授权失败")
 
     def __get_semester_message(self, try_again_times=3):
         """

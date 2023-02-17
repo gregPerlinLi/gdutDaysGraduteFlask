@@ -7,7 +7,8 @@ import flask
 import re
 from flask_cors import CORS
 import json
-from GdutUtil import GudtUtil
+from GdutUtil import GudtUtil, UtilsException
+from libxduauth.sites.ids import CaptchaException, AccountError
 from flask import request, jsonify
 from gevent import pywsgi
 
@@ -45,43 +46,36 @@ def login():
         "msg": "密码错误！",
         "isLive": False
     }
+    # try:
+
+    # print(account, password)
+    # 这里会出现js 提醒，
     try:
         data = request.get_json()
         account = data["account"]
         password = data["password"]
-        # print(account, password)
-        # 这里会出现js 提醒，
-        re_try = 3
-        while re_try > 0:
-            try:
-                user = GudtUtil(account, password)
-                ret = user.login()
-                break
-            except Exception as e:
-                re_try -= 1
-                print("登录失败，重试中")
-                continue
-        if re_try == 0:
-            ret = {
-                "code": 4000,
-                "data": None,
-                "userInfo": None,
-                "cookies": None,
-                "semester": None,
-                "msg": "登录失败,由于测试服务器原因，请等2min再登录！",
-                "isLive": False,
-            }
     except Exception as e:
-        print(e)
         ret = {
-            "code": 4000,
-            "data": None,
-            "msg": "请检查参数！"
+            "code": 404,
+            "msg": "参数异常！"
         }
-        pass
-    end = time.time()
-    print("耗时：" + str(end - t))
-    return flask.jsonify(ret)
+        return flask.jsonify(ret)
+    try:
+        user = GudtUtil(account, password)
+        ret = user.login()
+        return flask.jsonify(ret)
+    except CaptchaException as e:
+        ret['msg'] = "请回网页输验证码"
+        return flask.jsonify(ret)
+    except AccountError as e:
+        ret['msg'] = "密码错误"
+        return flask.jsonify(ret)
+    except UtilsException as e:
+        ret['msg'] = "服务器网络异常，请重试！"
+        return flask.jsonify(ret)
+    except Exception as e:
+        ret['msg'] = "服务器网络异常，请重试！"
+        return flask.jsonify(ret)
 
 
 @app.route('/api/getUserInfo', methods=["POST", "GET"])
